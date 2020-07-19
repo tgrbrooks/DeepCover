@@ -27,7 +27,7 @@ while failed:
     try:
         # Search for user input, 10 images at a time
         # Looking for letters, so want white background
-        gis.search({'q': sys.argv[1],
+        gis.search({'q': 'engineer cover letter',
                     'num': 10,
                     'start': 1,
                     'safe': 'high',
