@@ -2,35 +2,21 @@ import tensorflow as tf
 import numpy as np
 import os
 import time
+import re
 
 # Adapted from https://www.tensorflow.org/tutorials/text/text_generation
 
 # Create the dataset
+tokens = []
+with open('../../data/raw_jobs.txt', 'r') as f:
+    for line in f:
+        if line.find('-->') != -1:
+            continue
+        tokens.append(re.sub(r"[^a-z.]+"," ", line.lower()))
 
-text = open('../../data/sentences.csv', 'rb').read().decode(encoding='utf-8').replace(',',' ')
-text = text.replace('\n','. ')
-text = text.replace('\r','')
-text = text.replace('asa','as a')
-'''
-text = text.replace('asa ','as a ')
-text = text.replace('lam ','i am ')
-text = text.replace('tam ','i am ')
-text = text.replace(' nd ',' and ')
-text = text.replace(' ofthe ',' of the ')
-text = text.replace(' forth ',' for the ')
-text = text.replace(' ae ',' are ')
-text = text.replace(' fr ',' for ')
-text = text.replace(' wil ',' will ')
-text = text.replace(' ad ',' and ')
-text = text.replace(' inthe ',' in the ')
-text = text.replace(' fo ',' for ')
-text = text.replace(' wth ',' with ')
-text = text.replace(' al ',' all ')
-text = text.replace(' ny ',' any ')
-text = text.replace(' th ',' the ')
-text = text.replace(' re ',' are ')
-text = text.replace(' ca ',' can ')
-'''
+text = " ".join(tokens)
+text = text.replace('  ',' ')
+text = text.replace('   ',' ')
 print('Length of text: {} characters'.format(len(text)))
 
 vocab = sorted(set(text))
@@ -102,7 +88,8 @@ def build_model(vocab_size, embedding_dim, rnn_units, batch_size):
         tf.keras.layers.Embedding(vocab_size, embedding_dim,
                                   batch_input_shape=[batch_size, None]),
         tf.keras.layers.GRU(rnn_units, return_sequences=True, stateful=True,
-                            recurrent_initializer='glorot_uniform'),
+                            recurrent_initializer='glorot_uniform',
+                            reset_after=False),
         tf.keras.layers.Dense(vocab_size)
     ])
     return model
@@ -122,7 +109,6 @@ print("Input: \n", repr("".join(idx2char[input_example_batch[0]])))
 print("Next char predictions: \n", repr("".join(idx2char[sampled_indices])))
 
 # Train the model
-
 def loss(labels, logits):
     return tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
 
@@ -133,7 +119,7 @@ print("scalar_loss:      ", example_batch_loss.numpy().mean())
 model.compile(optimizer='adam', loss=loss)
 
 # Where the checkpoints will be saved
-checkpoint_dir = './training_checkpoints3'
+checkpoint_dir = './job_checkpoints2'
 # Name of the checkpoint files
 checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt_{epoch}")
 
@@ -141,5 +127,5 @@ checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     filepath=checkpoint_prefix,
     save_weights_only=True)
 
-#EPOCHS = 40
-#history = model.fit(dataset, epochs=EPOCHS, callbacks=[checkpoint_callback])
+EPOCHS = 20
+history = model.fit(dataset, epochs=EPOCHS, callbacks=[checkpoint_callback])

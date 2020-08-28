@@ -1,53 +1,38 @@
 import tensorflow as tf
 import numpy as np
+import re
 
 def build_model(vocab_size, embedding_dim, rnn_units, batch_size):
     model = tf.keras.Sequential([
         tf.keras.layers.Embedding(vocab_size, embedding_dim,
                                   batch_input_shape=[batch_size, None]),
         tf.keras.layers.GRU(rnn_units, return_sequences=True, stateful=True,
-                            recurrent_initializer='glorot_uniform'),
+                            recurrent_initializer='glorot_uniform',
+                            reset_after=False),
         tf.keras.layers.Dense(vocab_size)
     ])
     return model
 
-text = open('../../data/sentences.csv', 'rb').read().decode(encoding='utf-8').replace(',',' ')
-text = text.replace('\n','. ')
-text = text.replace('\r','')
-text = text.replace('asa','as a')
-'''
-text = text.replace('lam ','i am ')
-text = text.replace('tam ','i am ')
-text = text.replace(' nd ',' and ')
-text = text.replace(' ofthe ',' of the ')
-text = text.replace(' forth ',' for the ')
-text = text.replace(' ae ',' are ')
-text = text.replace(' fr ',' for ')
-text = text.replace(' wil ',' will ')
-text = text.replace(' ad ',' and ')
-text = text.replace(' inthe ',' in the ')
-text = text.replace(' fo ',' for ')
-text = text.replace(' wth ',' with ')
-text = text.replace(' al ',' all ')
-text = text.replace(' ny ',' any ')
-text = text.replace(' th ',' the ')
-text = text.replace(' re ',' are ')
-text = text.replace(' ca ',' can ')
-'''
+tokens = []
+with open('../../data/raw_jobs.txt', 'r') as f:
+    for line in f:
+        if line.find('-->') != -1:
+            continue
+        tokens.append(re.sub(r"[^a-z.]+"," ", line.lower()))
+
+text = " ".join(tokens)
+text = text.replace('  ',' ')
+text = text.replace('   ',' ')
 print('Length of text: {} characters'.format(len(text)))
 
 vocab = sorted(set(text))
-#vocab.remove('=')
 print('{} unique characters'.format(len(vocab)))
 
 # Map from unique characters to indices
 char2idx = {u:i for i, u in enumerate(vocab)}
 idx2char = np.array(vocab)
-#print(char2idx)
-#print(idx2char)
 
-'''
-checkpoint_dir = '../training/training_checkpoints3'
+checkpoint_dir = '../training/retrained_checkpoints2'
 
 print(tf.train.list_variables(tf.train.latest_checkpoint(checkpoint_dir)))
 print(tf.train.latest_checkpoint(checkpoint_dir))
@@ -55,8 +40,6 @@ print(tf.train.latest_checkpoint(checkpoint_dir))
 model = build_model(len(vocab), 256, 1024, batch_size=1)
 model.load_weights(tf.train.latest_checkpoint(checkpoint_dir))
 model.build(tf.TensorShape([1, None]))
-'''
-model = tf.keras.models.load_model('../training/saved_models/forwards_model.h5')
 model.summary()
 
 def generate_text(model, start_string):

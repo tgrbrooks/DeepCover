@@ -1,4 +1,5 @@
 import tensorflow as tf
+import tensorflowjs as tfjs
 import numpy as np
 from spellchecker import SpellChecker
 
@@ -156,3 +157,6 @@ for skill in skills:
 
 for sent in letter_body:
     print(sent)
+
+tfjs.converters.save_keras_model(forwards_model, '../web/models/forwards_model')
+tfjs.converters.save_keras_model(backwards_model, '../web/models/backwards_model')
