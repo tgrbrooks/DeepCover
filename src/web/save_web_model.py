@@ -2,6 +2,7 @@ import tensorflow as tf
 import tensorflowjs as tfjs
 import numpy as np
 import json
+import re
 
 def build_model(vocab_size, embedding_dim, rnn_units, batch_size):
     model = tf.keras.Sequential([
@@ -14,6 +15,7 @@ def build_model(vocab_size, embedding_dim, rnn_units, batch_size):
     ])
     return model
 
+'''
 text = open('../../data/sentences.csv', 'rb').read().decode(encoding='utf-8').replace(',',' ')
 text = text.replace('\n','. ')
 text = text.replace('\r','')
@@ -21,6 +23,18 @@ text = text.replace('/','')
 text = text.replace('-','')
 text = text.replace('=','')
 #text = text.replace('asa','as a')
+'''
+
+tokens = []
+with open('../../data/raw_jobs.txt', 'r') as f:
+    for line in f:
+        if line.find('-->') != -1:
+            continue
+        tokens.append(re.sub(r"[^a-z.]+"," ", line.lower()))
+
+text = " ".join(tokens)
+text = text.replace('  ',' ')
+text = text.replace('   ',' ')
 
 vocab = sorted(set(text))
 
@@ -28,7 +42,7 @@ vocab = sorted(set(text))
 char2idx = {u:i for i, u in enumerate(vocab)}
 idx2char = np.array(vocab)
 
-checkpoint_dir = '../training/job_checkpoints1'
+checkpoint_dir = '../training/retrained_checkpoints2'
 
 model = build_model(len(vocab), 256, 1024, batch_size=1)
 model.load_weights(tf.train.latest_checkpoint(checkpoint_dir))
